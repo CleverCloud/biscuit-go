@@ -285,7 +285,11 @@ func verifySignature(t *testing.T, rootPubKey sig.PublicKey, b []byte) {
 	signerTimestamp, ok := toValidate[0].IDs[6].(biscuit.Date)
 	require.True(t, ok)
 
-	signedTokenHash, err := token.SHA256Sum(token.BlockCount() - 1)
+	// retrieve the block index containing user signature
+	blockIdx, err := verifier.BlockIndexByFactName("signature")
+	require.NoError(t, err)
+	// the signedTokenHash is on all the blocks before the one containing the signature.
+	signedTokenHash, err := token.SHA256Sum(blockIdx - 1)
 	require.NoError(t, err)
 
 	// Reconstruct signed data with all the above properties

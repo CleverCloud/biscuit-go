@@ -22,6 +22,7 @@ type Verifier interface {
 	AddCaveat(caveat Caveat)
 	Verify() error
 	Query(rule Rule) (FactSet, error)
+	BlockIndexByFactName(name string) (int, error)
 	Reset()
 	PrintWorld() string
 }
@@ -179,6 +180,27 @@ func (v *verifier) Query(rule Rule) (FactSet, error) {
 	}
 
 	return result, nil
+}
+
+// BlockIndexByFactName returns the first block index containing a fact with the given name.
+// It starts from the authority block and then move on other blocks in order.
+// An error is returned when no fact with the given name can be found.
+func (v *verifier) BlockIndexByFactName(name string) (int, error) {
+	for _, f := range *v.biscuit.authority.facts {
+		if v.symbols.Str(f.Name) == name {
+			return 0, nil
+		}
+	}
+
+	for i, b := range v.biscuit.blocks {
+		for _, f := range *b.facts {
+			if v.symbols.Str(f.Name) == name {
+				return i + 1, nil
+			}
+		}
+	}
+
+	return 0, fmt.Errorf("fact %q not found", name)
 }
 
 func (v *verifier) PrintWorld() string {
